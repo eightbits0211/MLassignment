@@ -19,7 +19,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 | 5. Part 4 – Hierarchical | [x] | 16 Oct |
 | 6. Part 5 – Gaussian NB | [x] | 16 Oct |
 | 7. Results matrix PDF | [x] | 16 Oct |
-| 8. README, cleanup, zip | [ ] | 24 Oct |
+| 8. README, cleanup, zip | [~] all but zip | 18 Oct |
 | 9. Viva prep | [ ] | 25–26 Oct |
 | Buffer | — | 25–26 Oct |
 
@@ -189,7 +189,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - [x] Table 3 filled: router acc, oracle acc, pA, pB (test, %)
 - [x] Typed (not scanned) → generate PDF via `make_results_pdf.py` (re-runs all models, draws both tables with matplotlib, A4)
 - [x] Cross-check every number against script output — all 11 rows + Table 3 identical to Results log; PDF rendered and visually checked
-- [ ] Decide: include `make_results_pdf.py` in zip? (optional helper, not required)
+- [ ] Decide at zip time: include `make_results_pdf.py`? (optional helper; README already lists it as optional)
 
 ## Compliance audit vs problem statement (2026-10-18)
 - [x] Only numpy / pandas / stdlib in the 5 part scripts + common.py; no sklearn/scipy/etc. anywhere (grep). matplotlib only in optional `make_results_pdf.py`
@@ -208,17 +208,20 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - [x] `GaussianNB(var_smoothing=1e-9)`, log space, n×K×d broadcasting, sanity check
 - [x] Extras done: depth sweep, stumps, pairwise agreement, correlation matrix
 - [x] Each script runs with one command from the folder with the CSV, relative path only
-- [ ] Remaining (Phase 8): README.txt, fresh-folder run, zip named `<StudentID>_A1.zip`
+- [x] README.txt and fresh-folder run done · [ ] zip named `<StudentID>_A1.zip` pending
 
 ## Phase 8 – Packaging
-- [ ] Each script runs with one command (`python partX_....py`) from folder with CSV, no absolute paths
-- [ ] Each script prints the matrix numbers clearly labelled
-- [ ] `grep` for prohibited imports (sklearn, scipy, torch, tensorflow, xgboost, lightgbm, statsmodels)
-- [ ] Confirm no test-set use in fitting/tuning/statistics
-- [ ] `README.txt`: versions + run commands
-- [ ] Fresh-folder test: copy files + CSV to a temp dir and run all five scripts
-- [ ] Zip as `<StudentID>_A1.zip` (5 scripts + common.py + README.txt + results_matrix.pdf)
+- [x] Each script runs with one command (`python partX_....py`) from folder with CSV, no absolute paths
+- [x] Each script prints the matrix numbers clearly labelled
+- [x] `grep` for prohibited imports (sklearn, scipy, torch, tensorflow, xgboost, lightgbm, statsmodels)
+- [x] Confirm no test-set use in fitting/tuning/statistics
+- [x] `README.txt`: versions + run commands
+- [x] Fresh-folder test: copy files + CSV to a temp dir and run all five scripts
+- [ ] **(waiting — need Student ID)** Zip as `<StudentID>_A1.zip` (5 scripts + common.py + README.txt + results_matrix.pdf)
 - [ ] Submit before 23:55, 26-10-2026
+
+  - Fresh-folder run (2026-10-18): all 5 scripts exit 0, every printed matrix number identical to `results_matrix.pdf`
+  - No `.fit(` call on test data (grep); no prohibited libraries (grep)
 
 ## Phase 9 – Viva prep
 - [ ] Explain vectorised split search (cumsum trick) line by line
@@ -264,3 +267,4 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - 2026-10-18 — Full compliance audit vs PDF; fixed `HierarchicalClassifier` signature to `(router, experts)`.
 - 2026-10-18 — Local git repo initialised on `main` (.venv, __pycache__, zip ignored); first commit made. Waiting for remote URL to push.
 - 2026-10-18 — Pushed to https://github.com/eightbits0211/MLassignment (branch `main`).
+- 2026-10-18 — Phase 8 (except zip): README.txt written, fresh-folder run passes, no test-data fitting. Zip on hold until Student ID.
