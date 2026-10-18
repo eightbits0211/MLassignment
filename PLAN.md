@@ -270,3 +270,4 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - 2026-10-18 — Phase 8 (except zip): README.txt written, fresh-folder run passes, no test-data fitting. Zip on hold until Student ID.
 - 2026-10-18 — Simplified part1_decision_tree.py (shorter comments, removed unused depth()/n_leaves helpers); re-verified 96/96 vs reference, numbers unchanged.
 - 2026-10-18 — Simplified common.py and parts 2–5 (removed column-aligned comments, inner docstrings, divider lines); all outputs identical, all reference checks pass.
+- 2026-10-18 — README.txt cut down to required content only (versions + run commands).
