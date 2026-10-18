@@ -9,24 +9,19 @@ from part1_decision_tree import DecisionTree
 
 
 class HierarchicalClassifier:
-    """router: fitted tree predicting family ids.
-    experts: {family_name: fitted tree predicting (global) species ids}.
-    Family ids are the sorted family names (same encoding as common.load_data),
-    so family id f is handled by the expert of sorted(experts)[f]."""
-
     def __init__(self, router, experts):
         self.router = router
         self.experts = experts
+        # family ids are the sorted family names, same as in load_data
         self.family_names = np.array(sorted(experts))
 
     def predict_family(self, X):
         return self.router.predict(X)
 
     def predict_with_families(self, X, families):
-        """Send each row to the expert of the given family id; original order kept."""
         X = np.asarray(X, dtype=float)
         out = np.full(len(X), -1, dtype=int)
-        for f in np.unique(families):                # one expert call per family group
+        for f in np.unique(families):
             rows = np.where(families == f)[0]
             out[rows] = self.experts[self.family_names[f]].predict(X[rows])
         return out
@@ -36,13 +31,13 @@ class HierarchicalClassifier:
 
 
 def fit_hierarchical(X, y_species, y_family, family_names, criterion):
-    router = DecisionTree(criterion).fit(X, y_family)              # all training rows, Family label
+    router = DecisionTree(criterion).fit(X, y_family)
     experts = {}
     for f, name in enumerate(family_names):
-        rows = y_family == f                                       # TRUE family, never predicted
+        rows = y_family == f  # experts use the true family, not the router's
         experts[name] = DecisionTree(criterion).fit(X[rows], y_species[rows])
     h = HierarchicalClassifier(router, experts)
-    assert np.array_equal(h.family_names, family_names)     # id -> name mapping consistent
+    assert np.array_equal(h.family_names, family_names)
     return h
 
 
@@ -61,15 +56,15 @@ def evaluate(h, d, crit):
 
     ff_tr, ff_te = h.predict_family(Xtr), h.predict_family(Xte)
     ps_tr, ps_te = h.predict(Xtr), h.predict(Xte)
-    ps_oracle = h.predict_with_families(Xte, yf_te)                # perfect router
+    ps_oracle = h.predict_with_families(Xte, yf_te)
 
     r_tr, r_te = accuracy(yf_tr, ff_tr), accuracy(yf_te, ff_te)
     o_tr, o_te = accuracy(ys_tr, ps_tr), accuracy(ys_te, ps_te)
     oracle = accuracy(ys_te, ps_oracle)
     router_ok, species_ok = ff_te == yf_te, ps_te == ys_te
-    pA = float(np.mean(router_ok & ~species_ok))                   # router right, expert wrong
-    pB = float(np.mean(~router_ok))                                # router wrong
-    assert not np.any(species_ok & ~router_ok)                     # wrong family => wrong species
+    pA = float(np.mean(router_ok & ~species_ok))
+    pB = float(np.mean(~router_ok))
+    assert not np.any(species_ok & ~router_ok)
 
     print(f"\n==================== Hierarchical tree: {crit} ====================")
     for name, e in h.experts.items():

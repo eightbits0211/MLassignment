@@ -11,9 +11,6 @@ from part2_bagging_boosting import Bagging
 
 
 class RandomForest:
-    """T unconstrained trees, each on its own bootstrap sample; at every node only
-    `max_features` randomly drawn features are searched. Majority vote."""
-
     def __init__(self, n_estimators=50, criterion="gini", max_features=4,
                  max_depth=None, min_samples_split=2, seed=42):
         self.n_estimators = n_estimators
@@ -26,12 +23,12 @@ class RandomForest:
     def fit(self, X, y):
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=int)
-        rng = np.random.RandomState(self.seed)   # one generator for bootstraps AND feature subsets
+        rng = np.random.RandomState(self.seed)
         N = len(y)
         self.n_classes_ = int(y.max()) + 1
         self.trees_ = []
         for _ in range(self.n_estimators):
-            idx = rng.randint(0, N, size=N)          # bootstrap sample of N rows
+            idx = rng.randint(0, N, size=N)
             # the tree calls rng.choice(d, m, replace=False) afresh at every node
             tree = DecisionTree(self.criterion, self.max_depth, self.min_samples_split,
                                 max_features=self.max_features, rng=rng)
@@ -39,15 +36,13 @@ class RandomForest:
         return self
 
     def predict_all(self, X):
-        """(T, n) matrix of individual tree predictions."""
         return np.array([t.predict(X) for t in self.trees_])
 
     def predict(self, X):
-        return majority_vote(self.predict_all(X), self.n_classes_)   # ties -> smallest label
+        return majority_vote(self.predict_all(X), self.n_classes_)
 
 
 def mean_pairwise_agreement(preds):
-    """preds: (T, n). Fraction of samples on which two trees agree, averaged over all pairs."""
     T = len(preds)
     total, pairs = 0.0, 0
     for a in range(T):

@@ -21,19 +21,18 @@ class GaussianNB:
         self.prior_ = np.zeros(K)
         self.mean_ = np.zeros((K, d))
         self.var_ = np.zeros((K, d))
-        for k, c in enumerate(self.classes_):         # loop over classes only
+        for k, c in enumerate(self.classes_):
             Xc = X[y == c]
-            self.prior_[k] = len(Xc) / len(X)          # pi_c = n_c / N
+            self.prior_[k] = len(Xc) / len(X)
             self.mean_[k] = Xc.mean(axis=0)
-            self.var_[k] = Xc.var(axis=0) + self.epsilon_   # 1/n_c variance + epsilon
+            self.var_[k] = Xc.var(axis=0) + self.epsilon_
         return self
 
     def joint_log_likelihood(self, X):
-        """(n, K) matrix of log pi_c + sum_j log N(x_j | mu_cj, sigma2_cj)."""
         X = np.asarray(X, dtype=float)
-        diff = X[:, None, :] - self.mean_[None, :, :]                      # (n, K, d)
+        diff = X[:, None, :] - self.mean_[None, :, :]
         ll = -0.5 * np.sum(np.log(2 * np.pi * self.var_)[None]
-                           + diff ** 2 / self.var_[None], axis=2)          # (n, K)
+                           + diff ** 2 / self.var_[None], axis=2)
         return np.log(self.prior_)[None, :] + ll
 
     def predict(self, X):

@@ -10,8 +10,6 @@ from part1_decision_tree import DecisionTree
 
 
 class Bagging:
-    """T unconstrained trees on bootstrap samples (all features), majority vote."""
-
     def __init__(self, n_estimators=25, criterion="gini", max_depth=None,
                  min_samples_split=2, seed=42):
         self.n_estimators = n_estimators
@@ -23,27 +21,24 @@ class Bagging:
     def fit(self, X, y):
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=int)
-        rng = np.random.RandomState(self.seed)        # one fresh generator per ensemble
+        rng = np.random.RandomState(self.seed)
         N = len(y)
         self.n_classes_ = int(y.max()) + 1
         self.trees_ = []
         for _ in range(self.n_estimators):
-            idx = rng.randint(0, N, size=N)              # bootstrap: N rows with replacement
+            idx = rng.randint(0, N, size=N)
             tree = DecisionTree(self.criterion, self.max_depth, self.min_samples_split)
             self.trees_.append(tree.fit(X[idx], y[idx]))
         return self
 
     def predict_all(self, X):
-        """(T, n) matrix of individual tree predictions."""
         return np.array([t.predict(X) for t in self.trees_])
 
     def predict(self, X):
-        return majority_vote(self.predict_all(X), self.n_classes_)   # ties -> smallest label
+        return majority_vote(self.predict_all(X), self.n_classes_)
 
 
 class AdaBoostSAMME:
-    """Multi-class AdaBoost (SAMME) with weighted DecisionTree weak learners."""
-
     def __init__(self, n_estimators=50, criterion="gini", max_depth=3):
         self.n_estimators = n_estimators
         self.criterion = criterion
@@ -55,19 +50,19 @@ class AdaBoostSAMME:
         N = len(y)
         K = int(y.max()) + 1
         self.n_classes_ = K
-        w = np.full(N, 1.0 / N)                                   # 1. w_i = 1/N
+        w = np.full(N, 1.0 / N)
         self.trees_, self.alphas_, self.errors_ = [], [], []
         self.stopped_early_ = False
         for _ in range(self.n_estimators):
             tree = DecisionTree(self.criterion, max_depth=self.max_depth).fit(X, y, sample_weight=w)  # 2.
             wrong = tree.predict(X) != y
-            eps = float(np.sum(w[wrong]))                         # 3. weighted error (sum w = 1)
+            eps = float(np.sum(w[wrong]))
             eps = min(max(eps, 1e-10), 1 - 1e-10)
-            if eps >= 1 - 1.0 / K:                                # no better than random: discard, stop
+            if eps >= 1 - 1.0 / K:
                 self.stopped_early_ = True
                 break
-            alpha = np.log((1 - eps) / eps) + np.log(K - 1)       # 4. amount of say
-            w = w * np.exp(alpha * wrong)                         # 5. boost misclassified samples
+            alpha = np.log((1 - eps) / eps) + np.log(K - 1)
+            w = w * np.exp(alpha * wrong)
             w = w / w.sum()
             self.trees_.append(tree)
             self.alphas_.append(alpha)
@@ -75,7 +70,6 @@ class AdaBoostSAMME:
         return self
 
     def decision_scores(self, X):
-        """(n, K) matrix of sum_t alpha_t * 1[h_t(x) = k]."""
         X = np.asarray(X, dtype=float)
         scores = np.zeros((len(X), self.n_classes_))
         rows = np.arange(len(X))
@@ -84,10 +78,9 @@ class AdaBoostSAMME:
         return scores
 
     def predict(self, X):
-        return np.argmax(self.decision_scores(X), axis=1)        # 6. ties -> smallest label
+        return np.argmax(self.decision_scores(X), axis=1)
 
 
-# ====================================================================== checks
 def sanity_checks():
     print("=== Sanity checks ===")
     # K = 2: SAMME alpha = 2 * (classic AdaBoost alpha) -> identical classifier
@@ -120,7 +113,6 @@ def report(name, model, d):
     return tr, te, fa
 
 
-# ====================================================================== main
 def main():
     sanity_checks()
     d = get_split()

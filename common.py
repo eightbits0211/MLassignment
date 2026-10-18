@@ -6,11 +6,6 @@ DATA_FILE = "Frogs_MFCCs.csv"
 
 
 def load_data(path=DATA_FILE):
-    """Return X (n x 22), integer-encoded species/family labels and their class names.
-
-    Labels are encoded in sorted order of the class names, so "smallest class
-    label" in tie-breaks means alphabetically first.
-    """
     df = pd.read_csv(path)
     # CSV names are 'MFCCs_ 1'..'MFCCs_ 9', 'MFCCs_10'..'MFCCs_22'
     feat_cols = [c for c in df.columns if c.startswith("MFCCs_")]
@@ -32,7 +27,6 @@ def stratified_split(labels, test_frac=0.2, seed=42):
 
 
 def get_split():
-    """Load the data and apply the common split. Returns a dict of arrays."""
     X, ys, yf, sn, fn = load_data()
     tr, te = stratified_split(ys, 0.2, 42)
     return {
@@ -45,7 +39,6 @@ def get_split():
 
 
 def species_to_family(y_species, y_family, n_species):
-    """Array m with m[species_id] = family_id, read from the training data."""
     m = np.full(n_species, -1, dtype=int)
     m[y_species] = y_family
     return m
@@ -56,14 +49,12 @@ def accuracy(y_true, y_pred):
 
 
 def confusion_matrix(y_true, y_pred, n_classes):
-    """cm[i, j] = number of samples with true class i predicted as j."""
     cm = np.zeros((n_classes, n_classes), dtype=int)
     np.add.at(cm, (np.asarray(y_true), np.asarray(y_pred)), 1)
     return cm
 
 
 def majority_vote(preds, n_classes):
-    """preds: (T, n) predictions from T models. Ties -> smallest class label."""
     preds = np.asarray(preds)
     counts = np.zeros((n_classes, preds.shape[1]), dtype=int)
     for p in preds:  # loop over models, not samples
