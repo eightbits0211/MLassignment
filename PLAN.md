@@ -262,3 +262,4 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - 2026-10-16 — Phase 6 done: `part5_naive_bayes.py`; all five model scripts complete, results log full.
 - 2026-10-16 — Phase 7 done: `results_matrix.pdf` generated from fresh model runs.
 - 2026-10-18 — Full compliance audit vs PDF; fixed `HierarchicalClassifier` signature to `(router, experts)`.
+- 2026-10-18 — Local git repo initialised on `main` (.venv, __pycache__, zip ignored); first commit made. Waiting for remote URL to push.
