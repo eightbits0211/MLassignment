@@ -7,20 +7,17 @@ import numpy as np
 
 from common import get_split, accuracy, derived_family_accuracy, pct
 
-# Tolerance for comparing floating-point gains (treat |a-b| <= TOL as a tie,
-# and require gain > TOL to count as "positive").
-TOL = 1e-12
+TOL = 1e-12  # gains closer than this count as ties; gain must be > TOL to split
 
 
 def gini_from_weights(cw):
-    """cw: (..., K) class weight sums -> Gini impurity (...)."""
     tot = cw.sum(axis=-1, keepdims=True)
     p = np.divide(cw, tot, out=np.zeros_like(cw, dtype=float), where=tot > 0)
     return 1.0 - np.sum(p * p, axis=-1)
 
 
 def entropy_from_weights(cw):
-    """cw: (..., K) class weight sums -> entropy in bits (...), 0*log2(0) := 0."""
+    # 0*log2(0) is taken as 0
     tot = cw.sum(axis=-1, keepdims=True)
     p = np.divide(cw, tot, out=np.zeros_like(cw, dtype=float), where=tot > 0)
     logp = np.log2(p, out=np.zeros_like(p), where=p > 0)
@@ -39,7 +36,6 @@ class DecisionTree:
         self.rng = rng
         self._imp = gini_from_weights if criterion == "gini" else entropy_from_weights
 
-    # ------------------------------------------------------------------ fit
     def fit(self, X, y, sample_weight=None):
         X = np.asarray(X, dtype=float)
         y = np.asarray(y, dtype=int)
@@ -53,11 +49,10 @@ class DecisionTree:
         if self.max_features is not None and self.rng is None:
             self.rng = np.random.RandomState(42)
 
-        # one-hot class weights, shape (n, K)
+        # Wy[i, y[i]] = w[i], everything else 0
         Wy = np.zeros((n, self.n_classes_))
         Wy[np.arange(n), y] = w
 
-        # node arrays (grown as lists, converted to numpy at the end)
         self._feat, self._thr, self._left, self._right = [], [], [], []
         self._value, self._gain = [], []
 
@@ -66,15 +61,15 @@ class DecisionTree:
         while stack:
             node, idx, depth = stack.pop()
             cw = Wy[idx].sum(axis=0)
-            self._value[node] = int(np.argmax(cw))  # weighted majority, ties -> smallest label
+            self._value[node] = int(np.argmax(cw))
 
-            if (np.all(y[idx] == y[idx[0]])                      # pure
+            if (np.all(y[idx] == y[idx[0]])
                     or (self.max_depth is not None and depth >= self.max_depth)
                     or len(idx) < self.min_samples_split):
                 continue
 
             f, t, gain = self._best_split(X[idx], Wy[idx], cw)
-            if f is None:                                         # no positive gain
+            if f is None:
                 continue
 
             go_left = X[idx, f] <= t
@@ -82,7 +77,6 @@ class DecisionTree:
             self._feat[node], self._thr[node] = f, t
             self._left[node], self._right[node] = l, r
             self._gain[node] = gain
-            # push right first so the left subtree is built first (order is cosmetic)
             stack.append((r, idx[~go_left], depth + 1))
             stack.append((l, idx[go_left], depth + 1))
 
@@ -104,24 +98,19 @@ class DecisionTree:
         return len(self._feat) - 1
 
     def _best_split(self, Xn, Wn, cw_parent):
-        """Best (feature, threshold, gain) over all features/thresholds at a node.
-
-        All thresholds of all candidate features are scored at once:
-        sort each feature column, cumulative-sum the one-hot class weights, and
-        read off left/right class weights for every cut position.
-        """
+        # sort each feature, then cumsum of class weights gives the left child
+        # of every possible cut at once
         n, d = Xn.shape
         if self.max_features is None:
             feats = np.arange(d)
         else:
             m = min(self.max_features, d)
-            # fresh subset at every node; sort so ties go to the lower index
             feats = np.sort(self.rng.choice(d, m, replace=False))
 
-        Xf = Xn[:, feats]                                   # (n, m)
-        order = np.argsort(Xf, axis=0, kind="stable")       # (n, m)
-        xs = np.take_along_axis(Xf, order, axis=0)          # sorted values
-        left_cw = np.cumsum(Wn[order], axis=0)[:-1]         # (n-1, m, K): left = first i+1 rows
+        Xf = Xn[:, feats]
+        order = np.argsort(Xf, axis=0, kind="stable")
+        xs = np.take_along_axis(Xf, order, axis=0)
+        left_cw = np.cumsum(Wn[order], axis=0)[:-1]
         right_cw = cw_parent - left_cw
 
         W = cw_parent.sum()
@@ -129,17 +118,17 @@ class DecisionTree:
         Wr = right_cw.sum(axis=-1)
         gain = (self._imp(cw_parent)
                 - (Wl / W) * self._imp(left_cw)
-                - (Wr / W) * self._imp(right_cw))           # (n-1, m)
+                - (Wr / W) * self._imp(right_cw))
 
-        valid = xs[1:] > xs[:-1]                            # cut only between distinct values
+        valid = xs[1:] > xs[:-1]  # only cut between different values
         gain = np.where(valid, gain, -np.inf)
 
-        best_f, best_t, best_g = None, None, TOL           # must beat TOL to be "positive"
-        for j in range(len(feats)):                         # ascending feature index
+        best_f, best_t, best_g = None, None, TOL
+        for j in range(len(feats)):
             g = gain[:, j]
             gmax = g.max()
-            if gmax > best_g + TOL:                         # strictly better (ties keep lower feature)
-                i = int(np.argmax(g >= gmax - TOL))         # first = lowest threshold among ties
+            if gmax > best_g + TOL:  # ties keep the lower feature
+                i = int(np.argmax(g >= gmax - TOL))  # lowest threshold among ties
                 best_f = int(feats[j])
                 best_t = 0.5 * (xs[i, j] + xs[i + 1, j])
                 best_g = float(g[i])
@@ -147,9 +136,8 @@ class DecisionTree:
             return None, None, 0.0
         return best_f, best_t, best_g
 
-    # -------------------------------------------------------------- predict
     def apply(self, X):
-        """Leaf index for every row (vectorised: one loop step per tree level)."""
+        # move all rows down one level at a time until every row is in a leaf
         X = np.asarray(X, dtype=float)
         node = np.zeros(len(X), dtype=int)
         active = self.left_[node] != -1
@@ -164,24 +152,11 @@ class DecisionTree:
     def predict(self, X):
         return self.value_[self.apply(X)]
 
-    # -------------------------------------------------------------- info
     @property
     def n_nodes(self):
         return len(self.value_)
 
-    @property
-    def n_leaves(self):
-        return int(np.sum(self.left_ == -1))
 
-    def depth(self):
-        depth = np.zeros(self.n_nodes, dtype=int)
-        for i in range(self.n_nodes):          # children always have larger ids
-            if self.left_[i] != -1:
-                depth[self.left_[i]] = depth[self.right_[i]] = depth[i] + 1
-        return int(depth.max())
-
-
-# ====================================================================== checks
 def sanity_checks():
     print("=== Sanity checks ===")
     # (a)
@@ -229,7 +204,6 @@ def sanity_checks():
     print("(extra) split tie-breaks and leaf tie -> smallest label  OK\n")
 
 
-# ====================================================================== main
 def main():
     sanity_checks()
     d = get_split()
@@ -248,7 +222,7 @@ def main():
         fam_acc = derived_family_accuracy(pte, d["yf_test"], d["s2f"])
         results[crit] = (tr_acc, te_acc, fam_acc)
         print(f"{crit:8s} train {pct(tr_acc)}  test {pct(te_acc)}  derived family (test) {pct(fam_acc)}"
-              f"   [{tree.n_nodes} nodes, {tree.n_leaves} leaves, depth {tree.depth()}, fit {fit_s:.2f}s]")
+              f"   ({tree.n_nodes} nodes, {fit_s:.2f}s)")
 
     print("\n=== Depth sweep (not part of the matrix) ===")
     print(f"{'max_depth':>9s} | {'gini train':>10s} {'gini test':>10s} | {'ent train':>10s} {'ent test':>10s}")

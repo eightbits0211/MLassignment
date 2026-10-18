@@ -268,3 +268,4 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - 2026-10-18 — Local git repo initialised on `main` (.venv, __pycache__, zip ignored); first commit made. Waiting for remote URL to push.
 - 2026-10-18 — Pushed to https://github.com/eightbits0211/MLassignment (branch `main`).
 - 2026-10-18 — Phase 8 (except zip): README.txt written, fresh-folder run passes, no test-data fitting. Zip on hold until Student ID.
+- 2026-10-18 — Simplified part1_decision_tree.py (shorter comments, removed unused depth()/n_leaves helpers); re-verified 96/96 vs reference, numbers unchanged.
