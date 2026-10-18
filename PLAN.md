@@ -263,3 +263,4 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[!]` blocked/issue
 - 2026-10-16 — Phase 7 done: `results_matrix.pdf` generated from fresh model runs.
 - 2026-10-18 — Full compliance audit vs PDF; fixed `HierarchicalClassifier` signature to `(router, experts)`.
 - 2026-10-18 — Local git repo initialised on `main` (.venv, __pycache__, zip ignored); first commit made. Waiting for remote URL to push.
+- 2026-10-18 — Pushed to https://github.com/eightbits0211/MLassignment (branch `main`).
